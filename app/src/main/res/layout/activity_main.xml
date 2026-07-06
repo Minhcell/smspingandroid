@@ -1,149 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F4F6F8">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="8dp"
-            android:text="Gọi &amp; tự ngắt theo giây"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <RadioGroup
-            android:id="@+id/modeGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:text="SmsPing — OTG (SIM7600G-H)"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#0D47A1"
+            android:paddingBottom="8dp" />
 
-            <RadioButton
-                android:id="@+id/rbNormal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="Gọi thường" />
+        <!-- KẾT NỐI -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/SectionCard">
+            <LinearLayout android:orientation="vertical" android:padding="12dp"
+                android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/SectionTitle" android:text="Kết nối modem USB-OTG" />
+                <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="6dp">
+                    <Spinner android:id="@+id/spDevices" android:layout_width="0dp"
+                        android:layout_height="wrap_content" android:layout_weight="1" />
+                    <Button android:id="@+id/btnScan" android:text="Quét" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+                <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="6dp">
+                    <Button android:id="@+id/btnConnect" android:text="Connect" android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content" />
+                    <Button android:id="@+id/btnDisconnect" android:text="Disconnect" android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content" android:enabled="false" />
+                </LinearLayout>
+                <TextView android:id="@+id/lbStatus" android:text="Chưa kết nối" android:textColor="#D32F2F"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp" android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <RadioButton
-                android:id="@+id/rbVoip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="Gọi VoIP" />
-        </RadioGroup>
+        <!-- CHẾ ĐỘ -->
+        <com.google.android.material.card.MaterialCardView style="@style/SectionCard">
+            <LinearLayout android:orientation="vertical" android:padding="12dp"
+                android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/SectionTitle" android:text="Chọn chế độ lệnh SEND" />
+                <RadioGroup android:id="@+id/rgMode" android:orientation="horizontal"
+                    android:layout_width="match_parent" android:layout_height="wrap_content">
+                    <RadioButton android:id="@+id/rbPing" android:text="PING SMS" android:checked="true" />
+                    <RadioButton android:id="@+id/rbAt" android:text="AT Command" android:layout_marginStart="16dp" />
+                </RadioGroup>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <EditText
-            android:id="@+id/numberInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:autofillHints="phone"
-            android:hint="Nhập số điện thoại"
-            android:inputType="phone" />
+        <!-- PING SMS -->
+        <com.google.android.material.card.MaterialCardView android:id="@+id/cardPing" style="@style/SectionCard">
+            <LinearLayout android:orientation="vertical" android:padding="12dp"
+                android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/SectionTitle" android:text="PING số điện thoại" />
+                <EditText android:id="@+id/etTarget" android:hint="SĐT cần PING (VD: 0913123456)"
+                    android:inputType="phone" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <CheckBox android:id="@+id/ckbBao" android:text="Có yêu cầu báo khi SĐT online lại"
+                    android:layout_width="match_parent" android:layout_height="wrap_content" />
+                <EditText android:id="@+id/etNotify" android:hint="SĐT của bạn nhận báo (VD: 0913123456)"
+                    android:inputType="phone" android:enabled="false" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <Button android:id="@+id/btnSend" android:text="GỬI PING" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="6dp" />
+                <Button android:id="@+id/btnXoaBao" android:text="Xoá mọi yêu cầu báo"
+                    android:layout_width="match_parent" android:layout_height="wrap_content" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
-            android:id="@+id/voipConfig"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="8dp"
+        <!-- AT COMMAND -->
+        <com.google.android.material.card.MaterialCardView android:id="@+id/cardAt" style="@style/SectionCard"
             android:visibility="gone">
+            <LinearLayout android:orientation="vertical" android:padding="12dp"
+                android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/SectionTitle" android:text="Nhập lệnh AT Command" />
+                <EditText android:id="@+id/etAt" android:hint="VD: AT+CSQ" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <CheckBox android:id="@+id/ckbCr" android:text="+CR" android:checked="true"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                <Button android:id="@+id/btnSendAt" android:text="SEND AT" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Cấu hình SIP (VoIP)"
-                android:textStyle="bold" />
+        <!-- RAW / DECODE -->
+        <com.google.android.material.card.MaterialCardView style="@style/SectionCard">
+            <LinearLayout android:orientation="vertical" android:padding="12dp"
+                android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/SectionTitle" android:text="RAW CODE (chạm-giữ để chọn đoạn text rồi bấm DECODE)" />
+                <EditText android:id="@+id/etRaw" android:layout_width="match_parent" android:layout_height="150dp"
+                    android:gravity="top" android:inputType="textMultiLine" android:scrollbars="vertical" />
+                <TextView style="@style/SectionTitle" android:text="DECODE" android:layout_marginTop="8dp" />
+                <TextView android:id="@+id/tvDecode" android:layout_width="match_parent" android:layout_height="120dp"
+                    android:background="#FFFFFF" android:padding="6dp" android:scrollbars="vertical" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <EditText
-                android:id="@+id/sipDomain"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:autofillHints="domain"
-                android:hint="SIP domain (vd: sip.nhacungcap.vn)"
-                android:inputType="textUri" />
+        <!-- TOOL -->
+        <com.google.android.material.card.MaterialCardView style="@style/SectionCard">
+            <LinearLayout android:orientation="vertical" android:padding="12dp"
+                android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TextView style="@style/SectionTitle" android:text="Tool" />
+                <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <Button android:id="@+id/btnChkHard" android:text="Check HW" android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content" />
+                    <Button android:id="@+id/btnTk" android:text="Check TK SIM" android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content" />
+                </LinearLayout>
+                <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <Button android:id="@+id/btnDecode" android:text="DECODE" android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content" />
+                    <Button android:id="@+id/btnClr" android:text="CLEAR" android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content" />
+                </LinearLayout>
+                <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <Button android:id="@+id/btnHelp" android:text="Help" android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content" />
+                    <Button android:id="@+id/btnAbout" android:text="About" android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <EditText
-                android:id="@+id/sipUser"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:autofillHints="username"
-                android:hint="Tên đăng nhập SIP"
-                android:inputType="text" />
-
-            <EditText
-                android:id="@+id/sipPass"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:autofillHints="password"
-                android:hint="Mật khẩu SIP"
-                android:inputType="textPassword" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/secondsLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="16dp"
-            android:text="Tự ngắt sau: 3 giây" />
-
-        <SeekBar
-            android:id="@+id/secondsSeek"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="4" />
-
-        <Button
-            android:id="@+id/callButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Gọi" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="16dp"
-            android:text="Nhật ký:"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/logView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:textSize="13sp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Lịch sử cuộc gọi"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/clearHistoryButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Xóa lịch sử" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/historyContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
     </LinearLayout>
 </ScrollView>
