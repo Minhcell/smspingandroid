@@ -1,5 +1,6 @@
 package com.smsping.otg
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -62,6 +63,21 @@ class MainActivity : AppCompatActivity() {
         usb.register()
         scanDevices()
         wireEvents()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // App đã mở sẵn, vừa có thiết bị USB mới được cắm vào -> tự quét lại danh sách modem
+        if (intent.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) {
+            scanDevices()
+            toast("Đã phát hiện thiết bị USB mới, đã quét lại danh sách")
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Phòng trường hợp cắm modem khi app đang chạy nền, quét lại mỗi khi quay lại màn hình app
+        scanDevices()
     }
 
     override fun onDestroy() {
