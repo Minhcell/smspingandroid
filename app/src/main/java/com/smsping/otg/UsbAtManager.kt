@@ -57,8 +57,25 @@ class UsbAtManager(
     }
 
     /** Tìm modem SIM7600 đang cắm qua OTG (theo device_filter.xml) và mở kết nối. */
-    fun findAvailableDrivers(): List<UsbSerialDriver> =
-        UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
+    fun findAvailableDrivers(): List<UsbSerialDriver> {
+        // Bước 1: thử danh sách nhận diện mặc định của thư viện (chỉ gồm vài hãng chip phổ biến: FTDI, CP210x, CH340...)
+        val standard = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
+        if (standard.isNotEmpty()) return standard
+
+        // Bước 2: SIM7600 (SIMCom) thường KHÔNG nằm trong danh sách mặc định trên,
+        // nên tự bọc thủ công dạng CDC-ACM cho thiết bị khớp đúng Vendor ID đã khai báo trong device_filter.xml
+        val fallback = mutableListOf<UsbSerialDriver>()
+        for (device in usbManager.deviceList.values) {
+            if (device.vendorId == 7726 || device.vendorId == 1478) { // SIMCom / Qualcomm
+                try {
+                    fallback.add(com.hoho.android.usbserial.driver.CdcAcmSerialDriver(device))
+                } catch (_: Exception) {
+                    // Thiết bị không đúng chuẩn CDC-ACM, bỏ qua
+                }
+            }
+        }
+        return fallback
+    }
 
     fun connect(driver: UsbSerialDriver, onResult: (success: Boolean, message: String) -> Unit) {
         val device = driver.device
