@@ -56,6 +56,12 @@ class UsbAtManager(
         runCatching { context.unregisterReceiver(permissionReceiver) }
     }
 
+    /** Liệt kê TOÀN BỘ thiết bị USB đang cắm (không lọc), dùng để chẩn đoán khi không nhận diện được modem. */
+    fun listAllRawDevices(): List<String> =
+        usbManager.deviceList.values.map { d ->
+            "Tên: ${d.deviceName} | VendorID: ${d.vendorId} (0x${d.vendorId.toString(16)}) | ProductID: ${d.productId} (0x${d.productId.toString(16)}) | Class: ${d.deviceClass}"
+        }
+
     /** Tìm modem SIM7600 đang cắm qua OTG (theo device_filter.xml) và mở kết nối. */
     fun findAvailableDrivers(): List<UsbSerialDriver> {
         // Bước 1: thử danh sách nhận diện mặc định của thư viện (chỉ gồm vài hãng chip phổ biến: FTDI, CP210x, CH340...)
