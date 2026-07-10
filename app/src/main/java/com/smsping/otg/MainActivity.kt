@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     // views
     private lateinit var spDevices: Spinner
     private lateinit var btnScan: Button
+    private lateinit var btnDebugUsb: Button
     private lateinit var btnConnect: Button
     private lateinit var btnDisconnect: Button
     private lateinit var lbStatus: TextView
@@ -89,6 +90,7 @@ class MainActivity : AppCompatActivity() {
     private fun bindViews() {
         spDevices = findViewById(R.id.spDevices)
         btnScan = findViewById(R.id.btnScan)
+        btnDebugUsb = findViewById(R.id.btnDebugUsb)
         btnConnect = findViewById(R.id.btnConnect)
         btnDisconnect = findViewById(R.id.btnDisconnect)
         lbStatus = findViewById(R.id.lbStatus)
@@ -116,6 +118,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun wireEvents() {
         btnScan.setOnClickListener { scanDevices() }
+        btnDebugUsb.setOnClickListener {
+            val list = usb.listAllRawDevices()
+            val text = if (list.isEmpty()) "Không có thiết bị USB nào đang cắm (kể cả không đúng loại modem)."
+                        else list.joinToString("\n\n")
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Danh sách USB đang cắm")
+                .setMessage(text)
+                .setPositiveButton("Đóng", null)
+                .show()
+        }
 
         btnConnect.setOnClickListener { onConnectClick() }
         btnDisconnect.setOnClickListener { onDisconnectClick() }
