@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         btnSendAt = findViewById(R.id.btnSendAt)
         etRaw = findViewById(R.id.etRaw)
         tvDecode = findViewById(R.id.tvDecode)
+        tvDecode.movementMethod = android.text.method.ScrollingMovementMethod()
         btnChkHard = findViewById(R.id.btnChkHard)
         btnTk = findViewById(R.id.btnTk)
         btnDecode = findViewById(R.id.btnDecode)
@@ -500,6 +501,10 @@ class MainActivity : AppCompatActivity() {
         val line = "PING SMS có CMGS: ${kq.mr}\nĐến SĐT ${kq.sdtDcPing}\n" +
                 "Được SMSC nhận lúc: ${kq.tPing}, phát lúc: ${kq.tReport}\nCó kết quả: ${kq.kq}\n\n"
         tvDecode.text = SpannableStringBuilder(tvDecode.text).append(line)
+        tvDecode.post {
+            val scrollAmount = tvDecode.layout?.getLineTop(tvDecode.lineCount)?.minus(tvDecode.height) ?: 0
+            if (scrollAmount > 0) tvDecode.scrollTo(0, scrollAmount) else tvDecode.scrollTo(0, 0)
+        }
     }
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
