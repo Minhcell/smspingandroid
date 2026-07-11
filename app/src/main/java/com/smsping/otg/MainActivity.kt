@@ -1,6 +1,7 @@
 package com.smsping.otg
 
 import android.content.Intent
+import android.hardware.usb.UsbDevice
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -8,7 +9,6 @@ import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.hoho.android.usbserial.driver.UsbSerialDriver
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var usb: UsbAtManager
     private val handler = Handler(Looper.getMainLooper())
 
-    private var drivers: List<UsbSerialDriver> = emptyList()
+    private var devices: List<UsbDevice> = emptyList()
     private var myImei = ""
     private var flagCheckImei = false
     private var strDocKq = ""
@@ -176,17 +176,17 @@ class MainActivity : AppCompatActivity() {
 
     // ---------------- Quét & kết nối thiết bị USB ----------------
 
-    // Mỗi phần tử: (driver, chỉ số cổng trong driver đó) - ứng với 1 dòng trong danh sách chọn
-    private var portEntries: List<Pair<UsbSerialDriver, Int>> = emptyList()
+    // Mỗi phần tử: (device, chỉ số interface thô) - ứng với 1 dòng trong danh sách chọn
+    private var portEntries: List<Pair<UsbDevice, Int>> = emptyList()
 
     private fun scanDevices() {
-        drivers = usb.findAvailableDrivers()
-        val entries = mutableListOf<Pair<UsbSerialDriver, Int>>()
+        devices = usb.findMatchingDevices()
+        val entries = mutableListOf<Pair<UsbDevice, Int>>()
         val names = mutableListOf<String>()
-        for (driver in drivers) {
-            for (portIndex in driver.ports.indices) {
-                entries.add(driver to portIndex)
-                names.add("${driver.device.deviceName} - Cổng $portIndex / ${driver.ports.size} (VID ${driver.device.vendorId})")
+        for (device in devices) {
+            for (ifaceIndex in 0 until device.interfaceCount) {
+                entries.add(device to ifaceIndex)
+                names.add("${device.deviceName} - Interface $ifaceIndex / ${device.interfaceCount} (VID ${device.vendorId})")
             }
         }
         portEntries = entries
@@ -200,12 +200,12 @@ class MainActivity : AppCompatActivity() {
             toast("Không tìm thấy modem. Hãy cắm SIM7600G-H qua OTG rồi bấm Quét")
             return
         }
-        val (driver, portIndex) = entry
-        lbStatus.text = "Đang kết nối cổng $portIndex..."
+        val (device, ifaceIndex) = entry
+        lbStatus.text = "Đang kết nối interface $ifaceIndex..."
         lbStatus.setTextColor(0xFFDD6B00.toInt())
-        usb.connect(driver, portIndex) { success, message ->
+        usb.connect(device, ifaceIndex) { success, message ->
             if (!success) {
-                toast("$message\nThử chọn cổng khác trong danh sách rồi bấm Connect lại.")
+                toast("$message\nThử chọn interface khác trong danh sách rồi bấm Connect lại.")
                 setUiConnected(false)
                 return@connect
             }
