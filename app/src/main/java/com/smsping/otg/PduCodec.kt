@@ -72,7 +72,16 @@ object PduCodec {
      * Giải mã bản tin report (CDS) trả về từ SMSC. Port 1-1 từ hàm Decode() gốc,
      * hỗ trợ 4 độ dài bản tin đã gặp trong thực tế: 66, 64, 52, 54 ký tự.
      */
-    fun decode(textCode: String): KetQua {
+    fun decode(textCodeInput: String): KetQua {
+        // Rất hay gặp: người dùng bôi đen (chọn text) trên màn hình cảm ứng bị hụt mất byte "00"
+        // (SMSC length) ở đầu chuỗi report, vì nó nằm sát dòng "+CDS: 26" phía trên.
+        // Nếu phát hiện chuỗi bắt đầu ngay bằng PDU-type "06"/"07" (thay vì "00" + "06"/"07"),
+        // tự động bù lại "00" để không bị lệch toàn bộ phép tính phía sau.
+        val textCode = if (textCodeInput.startsWith("06") || textCodeInput.startsWith("07")) {
+            "00" + textCodeInput
+        } else {
+            textCodeInput
+        }
         val r = KetQua()
         when (textCode.length) {
             66 -> {
