@@ -72,7 +72,7 @@ class UsbAtManager(
         // nên tự bọc thủ công dạng CDC-ACM cho thiết bị khớp đúng Vendor ID đã khai báo trong device_filter.xml
         val fallback = mutableListOf<UsbSerialDriver>()
         for (device in usbManager.deviceList.values) {
-            if (device.vendorId == 7726 || device.vendorId == 1478) { // SIMCom / Qualcomm
+            if (device.vendorId == 7694 || device.vendorId == 1478) { // SIMCom (0x1e0e) / Qualcomm
                 try {
                     fallback.add(com.hoho.android.usbserial.driver.CdcAcmSerialDriver(device))
                 } catch (_: Exception) {
