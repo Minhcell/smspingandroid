@@ -68,8 +68,14 @@ class UsbAtManager(
         val standard = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
         if (standard.isNotEmpty()) return standard
 
-        // Bước 2: SIM7600 (SIMCom) thường KHÔNG nằm trong danh sách mặc định trên,
-        // nên tự bọc thủ công dạng CDC-ACM cho thiết bị khớp đúng Vendor ID đã khai báo trong device_filter.xml
+        // Bước 2: đăng ký đúng VID/PID đã xác nhận qua Debug USB (VendorID 7694 = 0x1e0e, ProductID 36865 = 0x9001)
+        // bằng ProbeTable chính thức của thư viện (giúp thư viện tự xác định đúng số cổng/control endpoint cho thiết bị composite)
+        val customTable = com.hoho.android.usbserial.driver.ProbeTable()
+        customTable.addProduct(7694, 36865, com.hoho.android.usbserial.driver.CdcAcmSerialDriver::class.java)
+        val custom = com.hoho.android.usbserial.driver.UsbSerialProber(customTable).findAllDrivers(usbManager)
+        if (custom.isNotEmpty()) return custom
+
+        // Bước 3: fallback cuối - tự bọc thủ công cho thiết bị khớp Vendor ID nếu 2 bước trên đều không ra kết quả
         val fallback = mutableListOf<UsbSerialDriver>()
         for (device in usbManager.deviceList.values) {
             if (device.vendorId == 7694 || device.vendorId == 1478) { // SIMCom (0x1e0e) / Qualcomm
@@ -98,27 +104,35 @@ class UsbAtManager(
     }
 
     private fun openPort(driver: UsbSerialDriver, onResult: (Boolean, String) -> Unit) {
-        try {
-            val connection = usbManager.openDevice(driver.device)
-                ?: return onResult(false, "Không mở được kết nối USB tới thiết bị")
-            val p = driver.ports[0]
-            p.open(connection)
-            p.setParameters(BAUD_RATE, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
-            port = p
-            ioManager = SerialInputOutputManager(p, object : SerialInputOutputManager.Listener {
-                override fun onNewData(data: ByteArray) {
-                    onDataReceived(String(data, Charsets.US_ASCII))
-                }
-                override fun onRunError(e: Exception) {
-                    onStatusChanged(false)
-                }
-            })
-            Executors.newSingleThreadExecutor().submit(ioManager)
-            onStatusChanged(true)
-            onResult(true, "Kết nối thành công")
-        } catch (e: Exception) {
-            onResult(false, "Lỗi kết nối: ${e.message}")
+        val connection = usbManager.openDevice(driver.device)
+            ?: return onResult(false, "Không mở được kết nối USB tới thiết bị")
+
+        // Modem SIM7600 lộ ra NHIỀU cổng ảo (chẩn đoán/GPS/AT/data...) trong cùng 1 thiết bị USB.
+        // Thử lần lượt từng cổng, cổng nào mở được thành công thì dùng cổng đó (thường là cổng AT command).
+        var lastError: Exception? = null
+        for ((index, candidate) in driver.ports.withIndex()) {
+            try {
+                candidate.open(connection)
+                candidate.setParameters(BAUD_RATE, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
+                port = candidate
+                ioManager = SerialInputOutputManager(candidate, object : SerialInputOutputManager.Listener {
+                    override fun onNewData(data: ByteArray) {
+                        onDataReceived(String(data, Charsets.US_ASCII))
+                    }
+                    override fun onRunError(e: Exception) {
+                        onStatusChanged(false)
+                    }
+                })
+                Executors.newSingleThreadExecutor().submit(ioManager)
+                onStatusChanged(true)
+                onResult(true, "Kết nối thành công (cổng số $index / ${driver.ports.size})")
+                return
+            } catch (e: Exception) {
+                lastError = e
+                try { candidate.close() } catch (_: Exception) { }
+            }
         }
+        onResult(false, "Lỗi kết nối: không có cổng nào mở được (${lastError?.message}). Thiết bị có ${driver.ports.size} cổng, đều lỗi.")
     }
 
     fun write(text: String) {
