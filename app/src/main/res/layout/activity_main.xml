@@ -105,7 +105,7 @@
                 <EditText android:id="@+id/etRaw" android:layout_width="match_parent" android:layout_height="150dp"
                     android:gravity="top" android:inputType="textMultiLine" android:scrollbars="vertical" />
                 <TextView style="@style/SectionTitle" android:text="DECODE" android:layout_marginTop="8dp" />
-                <TextView android:id="@+id/tvDecode" android:layout_width="match_parent" android:layout_height="120dp"
+                <TextView android:id="@+id/tvDecode" android:layout_width="match_parent" android:layout_height="180dp"
                     android:background="#FFFFFF" android:padding="6dp" android:scrollbars="vertical" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
