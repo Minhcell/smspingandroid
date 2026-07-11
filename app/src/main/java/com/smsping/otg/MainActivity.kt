@@ -176,24 +176,36 @@ class MainActivity : AppCompatActivity() {
 
     // ---------------- Quét & kết nối thiết bị USB ----------------
 
+    // Mỗi phần tử: (driver, chỉ số cổng trong driver đó) - ứng với 1 dòng trong danh sách chọn
+    private var portEntries: List<Pair<UsbSerialDriver, Int>> = emptyList()
+
     private fun scanDevices() {
         drivers = usb.findAvailableDrivers()
-        val names = drivers.map { "${it.device.deviceName} (VID ${it.device.vendorId})" }
-            .ifEmpty { listOf("Không tìm thấy thiết bị") }
-        spDevices.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, names)
+        val entries = mutableListOf<Pair<UsbSerialDriver, Int>>()
+        val names = mutableListOf<String>()
+        for (driver in drivers) {
+            for (portIndex in driver.ports.indices) {
+                entries.add(driver to portIndex)
+                names.add("${driver.device.deviceName} - Cổng $portIndex / ${driver.ports.size} (VID ${driver.device.vendorId})")
+            }
+        }
+        portEntries = entries
+        val displayNames = names.ifEmpty { listOf("Không tìm thấy thiết bị") }
+        spDevices.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, displayNames)
     }
 
     private fun onConnectClick() {
-        val driver = drivers.getOrNull(spDevices.selectedItemPosition)
-        if (driver == null) {
+        val entry = portEntries.getOrNull(spDevices.selectedItemPosition)
+        if (entry == null) {
             toast("Không tìm thấy modem. Hãy cắm SIM7600G-H qua OTG rồi bấm Quét")
             return
         }
-        lbStatus.text = "Đang kết nối..."
+        val (driver, portIndex) = entry
+        lbStatus.text = "Đang kết nối cổng $portIndex..."
         lbStatus.setTextColor(0xFFDD6B00.toInt())
-        usb.connect(driver) { success, message ->
+        usb.connect(driver, portIndex) { success, message ->
             if (!success) {
-                toast(message)
+                toast("$message\nThử chọn cổng khác trong danh sách rồi bấm Connect lại.")
                 setUiConnected(false)
                 return@connect
             }
