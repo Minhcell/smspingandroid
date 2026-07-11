@@ -89,50 +89,46 @@ class UsbAtManager(
         return fallback
     }
 
-    fun connect(driver: UsbSerialDriver, onResult: (success: Boolean, message: String) -> Unit) {
+    fun connect(driver: UsbSerialDriver, portIndex: Int, onResult: (success: Boolean, message: String) -> Unit) {
         val device = driver.device
         if (!usbManager.hasPermission(device)) {
             val flags = PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             val pi = PendingIntent.getBroadcast(context, 0, Intent(ACTION_USB_PERMISSION), flags)
             permissionCallback = { granted ->
-                if (granted) openPort(driver, onResult) else onResult(false, "Bạn chưa cấp quyền truy cập USB")
+                if (granted) openPort(driver, portIndex, onResult) else onResult(false, "Bạn chưa cấp quyền truy cập USB")
             }
             usbManager.requestPermission(device, pi)
             return
         }
-        openPort(driver, onResult)
+        openPort(driver, portIndex, onResult)
     }
 
-    private fun openPort(driver: UsbSerialDriver, onResult: (Boolean, String) -> Unit) {
+    private fun openPort(driver: UsbSerialDriver, portIndex: Int, onResult: (Boolean, String) -> Unit) {
         val connection = usbManager.openDevice(driver.device)
             ?: return onResult(false, "Không mở được kết nối USB tới thiết bị")
 
-        // Modem SIM7600 lộ ra NHIỀU cổng ảo (chẩn đoán/GPS/AT/data...) trong cùng 1 thiết bị USB.
-        // Thử lần lượt từng cổng, cổng nào mở được thành công thì dùng cổng đó (thường là cổng AT command).
-        var lastError: Exception? = null
-        for ((index, candidate) in driver.ports.withIndex()) {
-            try {
-                candidate.open(connection)
-                candidate.setParameters(BAUD_RATE, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
-                port = candidate
-                ioManager = SerialInputOutputManager(candidate, object : SerialInputOutputManager.Listener {
-                    override fun onNewData(data: ByteArray) {
-                        onDataReceived(String(data, Charsets.US_ASCII))
-                    }
-                    override fun onRunError(e: Exception) {
-                        onStatusChanged(false)
-                    }
-                })
-                Executors.newSingleThreadExecutor().submit(ioManager)
-                onStatusChanged(true)
-                onResult(true, "Kết nối thành công (cổng số $index / ${driver.ports.size})")
-                return
-            } catch (e: Exception) {
-                lastError = e
-                try { candidate.close() } catch (_: Exception) { }
-            }
+        val candidate = driver.ports.getOrNull(portIndex)
+            ?: return onResult(false, "Cổng số $portIndex không tồn tại trên thiết bị này")
+
+        try {
+            candidate.open(connection)
+            candidate.setParameters(BAUD_RATE, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
+            port = candidate
+            ioManager = SerialInputOutputManager(candidate, object : SerialInputOutputManager.Listener {
+                override fun onNewData(data: ByteArray) {
+                    onDataReceived(String(data, Charsets.US_ASCII))
+                }
+                override fun onRunError(e: Exception) {
+                    onStatusChanged(false)
+                }
+            })
+            Executors.newSingleThreadExecutor().submit(ioManager)
+            onStatusChanged(true)
+            onResult(true, "Kết nối thành công (cổng số $portIndex)")
+        } catch (e: Exception) {
+            try { candidate.close() } catch (_: Exception) { }
+            onResult(false, "Lỗi kết nối cổng $portIndex: ${e.message}")
         }
-        onResult(false, "Lỗi kết nối: không có cổng nào mở được (${lastError?.message}). Thiết bị có ${driver.ports.size} cổng, đều lỗi.")
     }
 
     fun write(text: String) {
