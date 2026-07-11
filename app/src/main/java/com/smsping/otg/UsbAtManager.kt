@@ -59,7 +59,13 @@ class UsbAtManager(
     /** Liệt kê TOÀN BỘ thiết bị USB đang cắm (không lọc), dùng để chẩn đoán khi không nhận diện được modem. */
     fun listAllRawDevices(): List<String> =
         usbManager.deviceList.values.map { d ->
-            "Tên: ${d.deviceName} | VendorID: ${d.vendorId} (0x${d.vendorId.toString(16)}) | ProductID: ${d.productId} (0x${d.productId.toString(16)}) | Class: ${d.deviceClass}"
+            val driverStatus = try {
+                val drv = com.hoho.android.usbserial.driver.CdcAcmSerialDriver(d)
+                "OK - ${drv.ports.size} cổng"
+            } catch (e: Exception) {
+                "LỖI dựng driver: ${e.javaClass.simpleName}: ${e.message}"
+            }
+            "Tên: ${d.deviceName} | VendorID: ${d.vendorId} (0x${d.vendorId.toString(16)}) | ProductID: ${d.productId} (0x${d.productId.toString(16)}) | Class: ${d.deviceClass} | InterfaceCount: ${d.interfaceCount} | Driver: $driverStatus"
         }
 
     /** Tìm modem SIM7600 đang cắm qua OTG (theo device_filter.xml) và mở kết nối. */
